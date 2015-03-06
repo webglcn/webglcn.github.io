@@ -11,7 +11,12 @@
   <script>
     $(document).ready(function() {
         $.get("demo.json", function(data) {
-            var conf = JSON && JSON.parse(data) || $.parseJSON(data);
+            var conf = null;
+            if (typeof data !== Object) {
+                conf = JSON && JSON.parse(data) || $.parseJSON(data);
+            } else {
+                conf = data;
+            }
             var canvas = document.getElementById("gl_canvas");
             var devicePixelRatio = window.devicePixelRatio || 1;
 
