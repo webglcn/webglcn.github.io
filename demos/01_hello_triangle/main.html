@@ -12,7 +12,7 @@
     $(document).ready(function() {
         $.get("demo.json", function(data) {
             var conf = null;
-            if (typeof data !== Object) {
+            if (typeof data !== "object") {
                 conf = JSON && JSON.parse(data) || $.parseJSON(data);
             } else {
                 conf = data;
