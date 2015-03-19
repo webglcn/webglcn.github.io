@@ -1,0 +1,13 @@
+{
+  "name": "WebGL-demos",
+  "version": "0.1.0",
+  "description": "WebGL demos",
+  "author": "Hongwei Li <webgl.cn@outlook.com>",
+  "main": "server.js",
+  "dependencies": {
+    "express": "3.1.0",
+    "socket.io": "1.1.0",
+    "body-parser":"1.6.5"
+  },
+  "engine": "node 0.10.8"
+}

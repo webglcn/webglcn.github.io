@@ -27,8 +27,13 @@ function main(){
     gl = canvas.getContext("webgl");
 
     /* 获取shader程序片段内容 */
-    var vs_src = document.getElementById("vs_src").value;
-    var fs_src = document.getElementById("fs_src").value;
+    var vs_src = $("#vstext").text();
+    var fs_src = $("#fstext").text();
+
+    canvas_width = $("#gl_canvas").width();
+    canvas_height = $("#gl_canvas").height();
+    max_row = canvas_height / 32.0;
+    max_col = canvas_width / 32.0;
 
     /* 加载shader */
     loadShader(vs_src, fs_src);
@@ -169,6 +174,10 @@ function fillVertData(){
 }
 
 function onDown(event){
+    var canvas = document.getElementById("gl_canvas");
+    var x = event.pageX - canvas.offsetLeft;
+    var y = event.pageY - canvas.offsetTop;
+    
     /* �?xFFFFF转换为RGB格式. */
     var color = color_picker.value.slice(1);
 
@@ -183,8 +192,8 @@ function onDown(event){
     b = parseInt(b, 16) / 255.0;
 
     /* 鼠标点击的坐�? 并换算为像素正方形的索引 */
-    var x = Math.floor(event.clientX / 32.0);
-    var y = Math.floor(event.clientY / 32.0);
+    x = Math.floor(x / 32.0);
+    y = Math.floor(y / 32.0);
 
     /* 更新点击的正方形像素的颜�?*/
     var start = (y * max_col + x) * 24;
