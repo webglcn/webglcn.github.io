@@ -3,33 +3,16 @@ var vertShader = null;
 var fragShader = null;
 var program = null;
 
-/* 地图顶点数据 */
-var vertex_data = null;
-var vertext_color = null;
-
-var vertex_data_buff = null;
-var vertext_color_buff = null;
-
-var canvas_width = 640.0;
-var canvas_height = 320.0;
-
-var max_row = canvas_height / 32.0;
-var max_col = canvas_width / 32.0;
-
-var color_picker = 0;
-
-/* 程序入口函数 */
+/* 程序入口函数, 由html页面 onload 调用 */
 function main(){
-    color_picker = document.getElementById("colorInputer");
+	/* 获取canvas元素以及GL Context */
     var canvas = document.getElementById("gl_canvas");
-    canvas.onmousedown = onDown;
-
     gl = canvas.getContext("webgl");
 
     /* 获取shader程序片段内容 */
-    var vs_src = document.getElementById("vs_src").value;
-    var fs_src = document.getElementById("fs_src").value;
-
+    var vs_src = $("#vstext").text();
+    var fs_src = $("#fstext").text();
+    
     /* 加载shader */
     loadShader(vs_src, fs_src);
     
@@ -39,41 +22,40 @@ function main(){
     gl.useProgram(program);
 
     /* 初始化GL需要的顶点数据 */
-    init();
+	init();
 
-    setInterval(render, 100);
+	/* 绘制三角形 */
+	render();
 }
 
 function loadShader(vs_src, fs_src){
-    /* 创建shader对象 */
-    vertShader = gl.createShader(gl.VERTEX_SHADER);
+	/* 创建shader对象 */
+	vertShader = gl.createShader(gl.VERTEX_SHADER);
     fragShader = gl.createShader(gl.FRAGMENT_SHADER);
-
 
     /* 读取shader程序片段 */
     gl.shaderSource(vertShader, vs_src);
     gl.shaderSource(fragShader, fs_src);
-    
 
     /* 编译shader */
     gl.compileShader(vertShader);
     gl.compileShader(fragShader);
 
-
     if(!gl.getShaderParameter(vertShader, gl.COMPILE_STATUS)){
-        alert("vertext shader error");
-        return;
+    	alert("vertext shader error");
+    	return;
     }
     if(!gl.getShaderParameter(fragShader, gl.COMPILE_STATUS)){
-        alert("fragment shader error");
-        return;
+    	alert("fragment shader error");
+    	return;
     }
+
 }
 
 
 /* 创建program对象, 并关联shader对象 */
 function createProgram(){
-    /* 创建program */
+	/* 创建program */
     program = gl.createProgram();
 
     /* 关联顶点shader对象和片段shader对象 */
@@ -84,113 +66,45 @@ function createProgram(){
     gl.linkProgram(program);
     
     if(!gl.getProgramParameter(program, gl.LINK_STATUS)){
-        alert("error:program");
-        return;
+    	alert("error:program");return;
     }
 }
 
 function init(){
-    vertex_data = new Array(24 * max_row * max_col);
-    vertext_color = new Array(24 * max_row * max_col);
-    fillVertData();
+    /* 三角形顶点数据, xyzw */
+    var vertex_data = [
+    0.0, 1.0, 0.0, 1.0,
+    -1.0, -1.0, 0.0, 1.0,
+    1.0, -1.0, 0.0, 1.0];
 
+    /* 创建缓存对象(buff object)名称 */
+	var buff = gl.createBuffer();
 
-    vertex_data_buff = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertex_data_buff);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertex_data), gl.STATIC_DRAW);
-    gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(0);
+	/* 绑定buff, 需要指定buff类型, 上面提供的vertex_data是顶点数组, 所以这里我们使用了ARRAY_BUFFER类型
+	 * 在这里, bindBuffer函数创建<缓存对象(buff object)>并与buff(缓存对象名称)关联
+	 */
+	gl.bindBuffer(gl.ARRAY_BUFFER, buff);
 
+	/* 给<缓存对象(buff object)>分配内存, 填充顶点数据vertex_data */
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertex_data), gl.STATIC_DRAW);
 
-    vertext_color_buff = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertext_color_buff);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertext_color), gl.STATIC_DRAW);
-    gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(1);
+	/* 关联vert shader中的变量(用索引来表示, 这里我们用0, 因为在vert shader中就一个变量)
+	 * 和我们提供的vertex_data数据的对应关系
+	 */
+	gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 0, 0);
+
+	/* 启用顶点属性数组中的第一个属性, GL把shader所有的属性都映射到了一个数组中,
+	 * 称为顶点属性数组<VertexAttribArray>, 所有的属性都可以用索引来获取
+	 */
+	gl.enableVertexAttribArray(0);
 }
 
 function render(){
+	/* 设置颜色缓冲区被清除时使用的颜色, 用来设置背景色, 4个参数表示rgba, 在0~1.0之间 */
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertext_color_buff);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertext_color), gl.STATIC_DRAW);
-    gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(1);
-
-    gl.drawArrays(gl.TRIANGLES, 0, 6 * max_row * max_col);
-}
-
-
-function fillVertData(){
-    /* 我们只需要xy */
-    var start_data = [
-        0, 0,
-        0, 1.0,
-        1.0, 0,
-
-        1.0, 0,
-        0, 1.0,
-        1.0, 1.0
-        ];
-
-    for (var row = 0; row < max_row; row++){
-        for (var col = 0; col < max_col; col++){
-            /* 当前正方形第一个三角形的第一个顶点 */
-            var start = (max_col * row + col) * 24;
-
-            /* 遍历6个顶点 */
-            for (var t = 0; t < 6; t++){
-                var i = start + t * 4;
-                /* 计算顶点的x坐标, first_x + col * width */
-                vertex_data[i + 0] = start_data[t * 2 + 0] + col * 1.0;
-                /* 计算顶点的y坐标, first_y + row * height */
-                vertex_data[i + 1] = start_data[t * 2 + 1] + row * 1.0;
-                 /* 顶点坐标的z */
-                vertex_data[i + 2] = 0;
-
-                 /* 顶点坐标的w */
-                vertex_data[i + 3] = 1;
-
-                /* 先将x坐标归一化到0~1之间, 然后再缩放到-1~1之间 */
-                vertex_data[i + 0] = vertex_data[i + 0] / max_col * 2.0 - 1.0;
-                /* y坐标处理方式跟x坐标一样,除了y坐标需要翻转, 因为我们的像素y轴朝下,与GL正好相反 */
-                vertex_data[i + 1] = -(vertex_data[i + 1] / max_row * 2.0 - 1.0);
-            }
-
-            /* 所有的颜色都初始化为白色 */
-            for (var t = 0; t < 24; t++){
-                vertext_color[start + t] = 1.0;
-            }
-        }
-    }
-
-    //alert(vertex_data);
-}
-
-function onDown(event){
-    /* 将0xFFFFF转换为RGB格式. */
-    var color = color_picker.value.slice(1);
-
-    /* 分别获取16位进制的rgb */
-    var r = color.slice(0, 2);
-    var g = color.slice(2, 4);
-    var b = color.slice(4, 6);
-
-    /* 转换为10进制,并且归一化 */
-    r = parseInt(r, 16) / 255.0;
-    g = parseInt(g, 16) / 255.0;
-    b = parseInt(b, 16) / 255.0;
-
-    /* 鼠标点击的坐标, 并换算为像素正方形的索引 */
-    var x = Math.floor(event.clientX / 32.0);
-    var y = Math.floor(event.clientY / 32.0);
-
-    /* 更新点击的正方形像素的颜色 */
-    var start = (y * max_col + x) * 24;
-    for (var t = 0; t < 6; t++){
-        vertext_color[start + t * 4 + 0] = r;
-        vertext_color[start + t * 4 + 1] = g;
-        vertext_color[start + t * 4 + 2] = b;
-    }
+    /* 清除颜色缓存 */
+	gl.clear(gl.COLOR_BUFFER_BIT);
+     
+    /* 绘制三角形 */
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
 }

@@ -1,35 +1,74 @@
 <html>
 <head>
-	<meta http-equiv="content-type" content="text/html" />
-	<meta charset="utf-8" />
-	<script type="text/javascript" src="draw_pixel.js"></script>
+  <meta http-equiv="content-type" content="text/html" />
+  <meta charset="utf-8" />
+  <link href="http://cdn.bootcss.com/bootstrap/3.3.2/css/bootstrap.min.css" rel="stylesheet">
+  <link href="data:text/css;charset=utf-8," data-href="http://cdn.bootcss.com/bootstrap/3.3.2/css/bootstrap-theme.min.css" rel="stylesheet" id="bs-theme-stylesheet">
+  <link rel="stylesheet" href="../styles/default.css">
+  <script src="../highlight.pack.js"></script>
+  <script src="../jquery-1.11.2.min.js"></script>
+  <script type="text/javascript" src="draw_pixel.js"></script>
+  <script>
+    $(document).ready(function() {
+        $.get("demo.json", function(data) {
+            var conf = null;
+            if (typeof data !== "object") {
+                conf = JSON && JSON.parse(data) || $.parseJSON(data);
+            } else {
+                conf = data;
+            }
+            var canvas = document.getElementById("gl_canvas");
+            var devicePixelRatio = window.devicePixelRatio || 1;
+
+            canvas.width = devicePixelRatio * conf.canvas_width;
+            canvas.height = devicePixelRatio * conf.canvas_height;
+            canvas.style.width = conf.canvas_width + "px";
+            canvas.style.height = conf.canvas_height + "px";
+            
+            $("title").text(conf.title);
+            
+            $.get("vertex.glsl", function(text) {
+                $("#vstext").text(text);
+                $.get("fragment.glsl", function(text) {
+                    $("#fstext").text(text);
+                    $(".panel-body").each(function(i, block) {
+                        hljs.highlightBlock(block);
+                    });
+                    // Start drawing.
+                    main();
+                });
+            });
+        });
+    });
+  </script>
+  <title>Draw Quad</title>
 </head>
-<title>hello world</title>
-<body onload='main()'>
-    <canvas id="gl_canvas" style="border:1px solid blue;" width='640px' height='320px'></canvas>
+  
+<body onload="">
+  <div class="container">
+    <div class="row">
 
-    <div>
-		<textarea id="vs_src">
-			attribute vec4 pos;
-			attribute vec4 color;
+      <div class="col-md-4">
+        <div class="row">
+          <div class="panel panel-default">
+            <div class="panel-heading"><strong>Vertex Shader</strong></div>
+            <div class="panel-body"><pre id="vstext"></pre></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="panel panel-default">
+            <div class="panel-heading"><strong>Fragment Shader</strong></div>
+            <div class="panel-body"><pre id="fstext"></pre></div>
+          </div>
+        </div>
+      </div> <!-- col-md-4 -->
 
-			varying vec4 v_color;
-		    void main(){
-		        gl_Position = pos;
-		        v_color = color;
-		    }
-		</textarea>
-		<textarea id="fs_src">
-			#ifdef GL_ES
-			precision lowp float;
-			#endif
+      <div class="col-md-8">
+        <canvas id="gl_canvas" style="border:1px solid blue;"></canvas>
+      </div> <!-- col-md-8 -->
 
-			varying vec4 v_color;
-		    void main(){
-		        gl_FragColor = v_color;
-		    }
-		</textarea>
-	</div>
-	<div><input id="colorInputer" type="color">选择颜色</input></div>
+    </div> <!-- row --> 
+  </div> <!-- container -->
 </body>
+
 </html>
