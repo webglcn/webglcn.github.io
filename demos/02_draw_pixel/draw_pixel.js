@@ -18,10 +18,12 @@ var max_col = canvas_width / 32.0;
 
 var color_picker = 0;
 
+var canvas = null;
+
 /* 程序入口函数 */
 function main(){
     color_picker = document.getElementById("colorInputer");
-    var canvas = document.getElementById("gl_canvas");
+    canvas = document.getElementById("gl_canvas");
     canvas.onmousedown = onDown;
 
     gl = canvas.getContext("webgl");
@@ -40,7 +42,7 @@ function main(){
     
     /* 创建program着色器程序 */
     createProgram();
-    /* 使用着色器程序 */
+     /* 使用着色器程序 */
     gl.useProgram(program);
 
     /* 初始化GL需要的顶点数据 */
@@ -60,7 +62,7 @@ function loadShader(vs_src, fs_src){
     gl.shaderSource(fragShader, fs_src);
     
 
-    /* 编译shader */
+     /* 编译shader */
     gl.compileShader(vertShader);
     gl.compileShader(fragShader);
 
@@ -128,7 +130,7 @@ function render(){
 
 
 function fillVertData(){
-    /* 我们只需要xy */
+    /* 平面图形, 我们只需要xy */
     var start_data = [
         0, 0,
         0, 1.0,
@@ -141,29 +143,29 @@ function fillVertData(){
 
     for (var row = 0; row < max_row; row++){
         for (var col = 0; col < max_col; col++){
-            /* 当前正方形第一个三角形的第一个顶�?*/
+            /* 当前正方形第一个三角形的第一个顶点 */
             var start = (max_col * row + col) * 24;
 
-            /* 遍历6个顶�?*/
+            /* 遍历6个顶点 */
             for (var t = 0; t < 6; t++){
                 var i = start + t * 4;
                 /* 计算顶点的x坐标, first_x + col * width */
                 vertex_data[i + 0] = start_data[t * 2 + 0] + col * 1.0;
                 /* 计算顶点的y坐标, first_y + row * height */
                 vertex_data[i + 1] = start_data[t * 2 + 1] + row * 1.0;
-                 /* 顶点坐标的z */
+                /* 顶点坐标的z, 全部为0 */
                 vertex_data[i + 2] = 0;
 
-                 /* 顶点坐标的w */
+                /* 顶点坐标的w, 齐次坐标, w全部为1 */
                 vertex_data[i + 3] = 1;
 
                 /* 先将x坐标归一化到0~1之间, 然后再缩放到-1~1之间 */
                 vertex_data[i + 0] = vertex_data[i + 0] / max_col * 2.0 - 1.0;
-                /* y坐标处理方式跟x坐标一�?除了y坐标需要翻�? 因为我们的像素y轴朝�?与GL正好相反 */
+                /* y坐标处理方式跟x坐标一样,除了y坐标需要翻转, 因为我们的像素y轴朝下,与GL正好相反 */
                 vertex_data[i + 1] = -(vertex_data[i + 1] / max_row * 2.0 - 1.0);
             }
 
-            /* 所有的颜色都初始化为白�?*/
+            /* 所有的颜色都初始化为白色 */
             for (var t = 0; t < 24; t++){
                 vertext_color[start + t] = 1.0;
             }
@@ -173,12 +175,8 @@ function fillVertData(){
     //alert(vertex_data);
 }
 
-function onDown(event){
-    var canvas = document.getElementById("gl_canvas");
-    var x = event.pageX - canvas.offsetLeft;
-    var y = event.pageY - canvas.offsetTop;
-    
-    /* �?xFFFFF转换为RGB格式. */
+function onDown(event){    
+    /* 将0xFFFFF转换为RGB格式. */
     var color = color_picker.value.slice(1);
 
     /* 分别获取16位进制的rgb */
@@ -186,16 +184,16 @@ function onDown(event){
     var g = color.slice(2, 4);
     var b = color.slice(4, 6);
 
-    /* 转换�?0进制,并且归一�?*/
+    /* 转换为10进制,并且归一化 */
     r = parseInt(r, 16) / 255.0;
     g = parseInt(g, 16) / 255.0;
     b = parseInt(b, 16) / 255.0;
 
-    /* 鼠标点击的坐�? 并换算为像素正方形的索引 */
-    x = Math.floor(x / 32.0);
-    y = Math.floor(y / 32.0);
+    /* 鼠标点击的坐标, 并换算为像素正方形的索引 */
+    x = Math.floor(event.layerX / 32.0);
+    y = Math.floor(event.layerY / 32.0);
 
-    /* 更新点击的正方形像素的颜�?*/
+    /* 更新点击的正方形像素的颜色 */
     var start = (y * max_col + x) * 24;
     for (var t = 0; t < 6; t++){
         vertext_color[start + t * 4 + 0] = r;
